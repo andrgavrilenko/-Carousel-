@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Carousel Builder</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@600;800&family=PT+Sans:wght@400;700&display=swap');
+
+:root {
+  --bg: #111;
+  --panel: #1c1c1c;
+  --panel2: #242424;
+  --border: rgba(255,255,255,0.09);
+  --border-h: rgba(255,255,255,0.3);
+  --text: rgba(255,255,255,0.88);
+  --muted: rgba(255,255,255,0.35);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--bg); color:var(--text); font-family:'PT Sans',sans-serif; min-height:100vh; }
+
+/* TOP BAR */
+.topbar {
+  background:var(--panel); border-bottom:1px solid var(--border);
+  padding:12px 20px; display:flex; flex-wrap:wrap; gap:14px; align-items:center;
+  position:sticky; top:0; z-index:100;
+}
+.topbar-title { font-family:'Montserrat',sans-serif; font-weight:800; font-size:15px; color:#fff; white-space:nowrap; }
+.sep { width:1px; height:24px; background:var(--border); flex-shrink:0; }
+.setting-group { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+.setting-label { font-family:'Montserrat',sans-serif; font-size:10px; font-weight:600; letter-spacing:1.5px; text-transform:uppercase; color:var(--muted); white-space:nowrap; }
+.pill { padding:5px 11px; border-radius:6px; border:1px solid var(--border); background:transparent; color:rgba(255,255,255,0.45); font-family:'Montserrat',sans-serif; font-size:11px; font-weight:600; cursor:pointer; transition:all 0.15s; white-space:nowrap; }
+.pill:hover { border-color:var(--border-h); color:#fff; }
+.pill.active { background:rgba(255,255,255,0.1); border-color:rgba(255,255,255,0.5); color:#fff; }
+.stepper { display:flex; align-items:center; border:1px solid var(--border); border-radius:6px; overflow:hidden; }
+.stepper button { background:transparent; border:none; color:var(--muted); font-size:16px; width:28px; height:28px; cursor:pointer; transition:all 0.15s; display:flex; align-items:center; justify-content:center; }
+.stepper button:hover { background:rgba(255,255,255,0.07); color:#fff; }
+.stepper-val { font-family:'Montserrat',sans-serif; font-size:13px; font-weight:700; color:#fff; width:26px; text-align:center; }
+
+/* HOW-TO BANNER */
+.howto {
+  background:#161616; border-bottom:1px solid var(--border);
+  padding:16px 20px; display:flex; gap:20px; align-items:flex-start; flex-wrap:wrap;
+}
+.howto-left { display:flex; gap:10px; align-items:flex-start; min-width:200px; flex:0 0 auto; }
+.howto-icon { font-size:22px; margin-top:1px; }
+.howto-title { font-family:'Montserrat',sans-serif; font-size:12px; font-weight:700; color:#fff; margin-bottom:4px; }
+.howto-desc { font-size:12px; color:var(--muted); line-height:1.55; max-width:260px; }
+.howto-right { display:flex; flex-direction:column; gap:8px; flex:1; min-width:260px; }
+.prompt-box {
+  background:var(--panel2); border:1px solid var(--border); border-radius:8px;
+  padding:11px 14px; font-family:monospace; font-size:12px;
+  color:rgba(255,255,255,0.65); line-height:1.7; white-space:pre-wrap; word-break:break-word;
+}
+.prompt-highlight { color:rgba(255,200,80,0.85); }
+.copy-btn {
+  align-self:flex-start; padding:7px 16px; border-radius:7px;
+  border:1px solid rgba(255,255,255,0.2); background:transparent;
+  color:rgba(255,255,255,0.6); font-family:'Montserrat',sans-serif;
+  font-size:11px; font-weight:700; cursor:pointer; transition:all 0.15s;
+}
+.copy-btn:hover { border-color:rgba(255,255,255,0.5); color:#fff; }
+.copy-btn.copied { border-color:#6dcc8a; color:#6dcc8a; }
+
+/* PASTE PANEL TOGGLE */
+.paste-toggle-bar {
+  background:#191919; border-bottom:1px solid var(--border);
+  padding:10px 20px; display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+}
+.paste-toggle-label { font-family:'Montserrat',sans-serif; font-size:11px; font-weight:600; letter-spacing:1px; text-transform:uppercase; color:var(--muted); }
+.toggle-btn { padding:5px 13px; border-radius:6px; border:1px solid var(--border); background:transparent; color:rgba(255,255,255,0.45); font-family:'Montserrat',sans-serif; font-size:11px; font-weight:600; cursor:pointer; transition:all 0.15s; }
+.toggle-btn:hover { border-color:var(--border-h); color:#fff; }
+.paste-hint { font-size:11px; color:rgba(255,255,255,0.2); }
+
+.paste-panel { background:#161616; border-bottom:1px solid var(--border); max-height:0; overflow:hidden; transition:max-height 0.3s ease; }
+.paste-panel.open { max-height:300px; }
+.paste-inner { padding:16px 20px; display:flex; gap:12px; align-items:flex-start; }
+.paste-inner textarea { flex:1; min-height:150px; background:var(--panel2); border:1px solid var(--border); border-radius:8px; padding:10px 13px; color:var(--text); font-family:monospace; font-size:12px; line-height:1.6; resize:vertical; outline:none; transition:border-color 0.15s; }
+.paste-inner textarea:focus { border-color:var(--border-h); }
+.paste-inner textarea::placeholder { color:rgba(255,255,255,0.15); font-style:italic; }
+.paste-actions { display:flex; flex-direction:column; gap:8px; min-width:110px; }
+.parse-btn { padding:10px 14px; border-radius:8px; border:none; background:#fff; color:#111; font-family:'Montserrat',sans-serif; font-size:12px; font-weight:800; cursor:pointer; transition:opacity 0.15s; }
+.parse-btn:hover { opacity:0.88; }
+.clear-script-btn { padding:10px 14px; border-radius:8px; border:1px solid var(--border); background:transparent; color:var(--muted); font-family:'Montserrat',sans-serif; font-size:12px; font-weight:600; cursor:pointer; transition:all 0.15s; }
+.clear-script-btn:hover { border-color:var(--border-h); color:#fff; }
+.parse-status { font-size:11px; line-height:1.5; margin-top:4px; }
+.parse-status.ok { color:#6dcc8a; }
+.parse-status.err { color:#ff7070; }
+
+/* MAIN */
+.main { display:flex; flex-direction:column; }
+.slide-row { display:flex; border-bottom:1px solid var(--border); min-height:260px; }
+
+/* Editor */
+.editor { flex:0 0 330px; border-right:1px solid var(--border); padding:18px; display:flex; flex-direction:column; gap:11px; background:var(--panel); }
+.slide-index { font-family:'Montserrat',sans-serif; font-size:10px; font-weight:700; letter-spacing:2px; text-transform:uppercase; color:var(--muted); }
+.field-label { font-family:'Montserrat',sans-serif; font-size:10px; font-weight:600; letter-spacing:1px; text-transform:uppercase; color:var(--muted); margin-bottom:4px; }
+.field-label .opt { font-weight:400; text-transform:none; letter-spacing:0; color:rgba(255,255,255,0.2); }
+input[type=text], textarea { width:100%; background:var(--panel2); border:1px solid var(--border); border-radius:7px; padding:8px 11px; color:var(--text); font-family:'PT Sans',sans-serif; font-size:14px; line-height:1.5; outline:none; transition:border-color 0.15s; resize:none; }
+input[type=text]:focus, textarea:focus { border-color:var(--border-h); }
+input[type=text]::placeholder, textarea::placeholder { color:rgba(255,255,255,0.18); }
+textarea.body-field { min-height:68px; }
+
+.photo-strip { display:flex; align-items:center; gap:8px; margin-top:2px; }
+.photo-btn { flex:1; padding:7px 10px; border-radius:7px; border:1px dashed rgba(255,255,255,0.18); background:transparent; color:rgba(255,255,255,0.38); font-family:'Montserrat',sans-serif; font-size:11px; font-weight:600; cursor:pointer; transition:all 0.15s; text-align:center; }
+.photo-btn:hover { border-color:var(--border-h); color:#fff; }
+.photo-btn.has-photo { border-style:solid; border-color:rgba(255,255,255,0.3); color:#fff; background:rgba(255,255,255,0.05); }
+.remove-photo-btn { padding:7px 10px; border-radius:7px; border:1px solid rgba(255,70,70,0.25); background:transparent; color:rgba(255,100,100,0.55); font-family:'Montserrat',sans-serif; font-size:11px; font-weight:600; cursor:pointer; transition:all 0.15s; display:none; }
+.remove-photo-btn:hover { border-color:rgba(255,70,70,0.6); color:#ff6060; }
+.file-input { display:none; }
+.dimmer-strip { display:none; align-items:center; gap:8px; }
+.dimmer-strip span { font-size:11px; color:var(--muted); white-space:nowrap; min-width:22px; }
+.dimmer-strip input[type=range] { flex:1; accent-color:rgba(255,255,255,0.5); cursor:pointer; height:3px; }
+
+/* Preview */
+.preview-col { flex:1; background:#0d0d0d; display:flex; align-items:center; justify-content:center; padding:20px 16px; overflow:hidden; }
+.slide-card { border-radius:10px; padding:16px 20px 44px; display:flex; flex-direction:column; justify-content:flex-end; position:relative; overflow:hidden; transition:max-width 0.25s, min-height 0.25s; width:100%; max-width:260px; min-height:260px; }
+/* when photo present, remove CSS bg class */
+.slide-card.has-photo { background:none !important; }
+.slide-card.has-photo::before { display:none !important; }
+.card-photo { position:absolute; inset:0; background-size:150%; background-position:center 50%; display:none; z-index:0; }
+.card-overlay { position:absolute; inset:0; background:rgba(0,0,0,0.55); display:none; z-index:1; }
+.card-number { position:absolute; top:11px; right:13px; font-family:'PT Sans',sans-serif; font-size:10px; color:rgba(255,255,255,0.3); letter-spacing:1px; z-index:2; }
+.card-tag { font-family:'Montserrat',sans-serif; font-size:8px; font-weight:600; letter-spacing:2px; text-transform:uppercase; color:rgba(255,255,255,0.45); margin-bottom:6px; position:relative; z-index:2; display:block; min-height:10px; }
+.card-headline { font-family:'Montserrat',sans-serif; font-weight:800; font-size:12px; line-height:1.3; color:#fff; margin-bottom:7px; position:relative; z-index:2; word-break:break-word; }
+.card-body { font-family:'PT Sans',sans-serif; font-size:10px; line-height:1.5; color:rgba(255,255,255,0.82); position:relative; z-index:2; word-break:break-word; }
+.card-dots { position:absolute; bottom:11px; left:50%; transform:translateX(-50%); display:flex; gap:4px; z-index:2; }
+.card-dots span { width:4px; height:4px; border-radius:50%; background:rgba(255,255,255,0.22); display:block; }
+.card-dots span.active { background:rgba(255,255,255,0.75); }
+
+.bg-warm { background:linear-gradient(160deg,#1a1a0a 0%,#0d1a0a 50%,#0a0a0a 100%); }
+.bg-warm::before { content:''; position:absolute; width:130px; height:130px; border-radius:50%; background:radial-gradient(circle,rgba(234,179,8,0.09) 0%,transparent 70%); top:20px; right:-20px; z-index:1; }
+.bg-gradient { background:linear-gradient(135deg,#0a0a2e 0%,#1a0a3e 40%,#0d0d0d 100%); }
+.bg-diag { background:repeating-linear-gradient(45deg,transparent,transparent 14px,rgba(255,255,255,0.02) 14px,rgba(255,255,255,0.02) 15px),#0a0a0a; }
+
+.hint-bar { background:var(--panel); border-top:1px solid var(--border); padding:14px 20px; text-align:center; font-size:13px; color:var(--muted); }
+
+/* PRESENT MODE */
+.present-overlay {
+  display:none; position:fixed; inset:0; background:#000;
+  z-index:9999; flex-direction:column; align-items:center; justify-content:center;
+  touch-action:none;
+}
+.present-overlay.active { display:flex; }
+.present-card-wrap {
+  display:flex; align-items:center; justify-content:center;
+  width:100%; height:100%;
+  user-select:none;
+}
+.present-card {
+  border-radius:10px; overflow:hidden; position:relative;
+  display:flex; flex-direction:column; justify-content:flex-end;
+  flex-shrink:0;
+}
+.present-close {
+  position:fixed; top:16px; right:16px;
+  width:36px; height:36px; border-radius:50%;
+  background:rgba(255,255,255,0.12); border:none;
+  color:#fff; font-size:18px; cursor:pointer; z-index:10000;
+  display:flex; align-items:center; justify-content:center;
+}
+.present-dots {
+  position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
+  display:flex; gap:6px; z-index:10000;
+}
+.present-dots span {
+  width:6px; height:6px; border-radius:50%;
+  background:rgba(255,255,255,0.25); display:block; transition:background 0.2s;
+}
+.present-dots span.active { background:#fff; }
+
+@media(max-width:680px){
+  .slide-row { flex-direction:column; }
+  .editor { flex:none; border-right:none; border-bottom:1px solid var(--border); }
+  .sep { display:none; }
+  .howto { flex-direction:column; }
+}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <span class="topbar-title">🎞 Carousel Builder</span>
+  <div class="sep"></div>
+  <div class="setting-group">
+    <span class="setting-label">Lang</span>
+    <button class="pill active" data-group="lang" data-val="en" onclick="pick(this)">EN</button>
+    <button class="pill" data-group="lang" data-val="ru" onclick="pick(this)">RU</button>
+    <button class="pill" data-group="lang" data-val="fi" onclick="pick(this)">FI</button>
+  </div>
+  <div class="sep"></div>
+  <div class="setting-group">
+    <span class="setting-label">Platform</span>
+    <button class="pill active" data-group="platform" data-val="linkedin-square" onclick="pick(this)">LinkedIn 1:1</button>
+    <button class="pill" data-group="platform" data-val="linkedin-wide" onclick="pick(this)">LinkedIn 1.91:1</button>
+    <button class="pill" data-group="platform" data-val="instagram-portrait" onclick="pick(this)">Instagram 4:5</button>
+    <button class="pill" data-group="platform" data-val="instagram-square" onclick="pick(this)">Instagram 1:1</button>
+    <button class="pill" data-group="platform" data-val="facebook" onclick="pick(this)">Facebook</button>
+    <button class="pill" data-group="platform" data-val="twitter" onclick="pick(this)">X / Twitter</button>
+  </div>
+  <div class="sep"></div>
+  <div class="setting-group">
+    <span class="setting-label">Slides</span>
+    <div class="stepper">
+      <button onclick="changeCount(-1)">−</button>
+      <span class="stepper-val" id="count-display">6</span>
+      <button onclick="changeCount(1)">+</button>
+    </div>
+  </div>
+</div>
+
+<!-- HOW-TO BANNER -->
+<div class="howto">
+  <div class="howto-left">
+    <span class="howto-icon">💬</span>
+    <div>
+      <div class="howto-title">Step 1 — Generate your slide script</div>
+      <div class="howto-desc">Open a <strong style="color:#fff">new AI Tool chat</strong>, copy this prompt, paste your article or text after it. The AI returns a ready script — no API, no cost.</div>
+    </div>
+  </div>
+  <div class="howto-right">
+    <div class="prompt-box" id="prompt-box"></div>
+    <button class="copy-btn" id="copy-btn" onclick="copyPrompt()">📋 Copy prompt</button>
+  </div>
+</div>
+
+<!-- PASTE SCRIPT PANEL -->
+<div class="paste-toggle-bar">
+  <span class="paste-toggle-label">Step 2 — Paste the script</span>
+  <button class="toggle-btn" id="paste-toggle" onclick="togglePaste()">▾ Open</button>
+  <span class="paste-hint">Paste the formatted output from your AI tool → fill all slides instantly</span>
+</div>
+
+<div class="paste-panel" id="paste-panel">
+  <div class="paste-inner">
+    <textarea id="script-input" placeholder="---
+TAG: ВСТУПЛЕНИЕ
+HEADLINE: Ваш заголовок
+BODY: Текст первого слайда.
+---
+TAG: СОВЕТ #1
+HEADLINE: Второй заголовок
+BODY: Текст второго слайда.
+---"></textarea>
+    <div class="paste-actions">
+      <button class="parse-btn" onclick="parseScript()">⚡ Fill slides</button>
+      <button class="clear-script-btn" onclick="clearScript()">Clear</button>
+      <div class="parse-status" id="parse-status"></div>
+    </div>
+  </div>
+</div>
+
+<!-- SLIDE ROWS -->
+<div class="main" id="main"></div>
+
+<div class="hint-bar">
+  📱 Screenshot each slide →
+  <button onclick="openPresent(0)" style="margin-left:10px;padding:6px 16px;border-radius:7px;border:1px solid rgba(255,255,255,0.25);background:transparent;color:#fff;font-family:'Montserrat',sans-serif;font-size:11px;font-weight:700;cursor:pointer;">▶ Present fullscreen</button>
+</div>
+
+<!-- PRESENT OVERLAY -->
+<div class="present-overlay" id="present-overlay">
+  <button class="present-close" onclick="closePresent()">✕</button>
+  <div class="present-card-wrap" id="present-wrap">
+    <div class="present-card" id="present-card"></div>
+  </div>
+  <div class="present-dots" id="present-dots"></div>
+</div>
+
+<script>
+const state = { lang:'en', platform:'linkedin-square', count:6, slides:[] };
+
+const PLATFORMS = {
+  'linkedin-square':    {w:260,h:260},
+  'linkedin-wide':      {w:340,h:178},
+  'instagram-portrait': {w:220,h:275},
+  'instagram-square':   {w:260,h:260},
+  'facebook':           {w:260,h:260},
+  'twitter':            {w:260,h:260},
+};
+
+const BG_SEQ = ['bg-warm','bg-diag','bg-gradient','bg-diag','bg-gradient','bg-diag','bg-gradient','bg-diag','bg-gradient','bg-diag','bg-gradient','bg-warm'];
+
+const PH = {
+  en:{
+    tags:  ['INTRO','TIP #1','TIP #2','TIP #3','TIP #4','TIP #5','TIP #6','TIP #7','TIP #8','TIP #9','TIP #10','BOTTOM LINE'],
+    heads: ['Your hook headline','First key point','Second key point','Third key point','Fourth key point','Fifth key point','Sixth key point','Seventh key point','Eighth key point','Ninth key point','Tenth key point','Your conclusion'],
+    bodies:['A short teaser that makes people swipe →','Explain the first idea. Keep it 2–3 sentences.','One thought per slide. Short sentences work best.','Use numbers and facts when you have them.','Real examples beat vague advice every time.','Keep energy up — this is the middle, not the end.','Another strong point here.','Keep it concrete and specific.','One more idea before the wrap-up.','Almost there — make it count.','Final idea before the conclusion.','Summarise the key takeaway. Add a call to action.'],
+  },
+  ru:{
+    tags:  ['ВСТУПЛЕНИЕ','СОВЕТ #1','СОВЕТ #2','СОВЕТ #3','СОВЕТ #4','СОВЕТ #5','СОВЕТ #6','СОВЕТ #7','СОВЕТ #8','СОВЕТ #9','СОВЕТ #10','ВЫВОД'],
+    heads: ['Ваш цепляющий заголовок','Первый ключевой тезис','Второй тезис','Третий тезис','Четвёртый тезис','Пятый тезис','Шестой тезис','Седьмой тезис','Восьмой тезис','Девятый тезис','Десятый тезис','Ваш вывод'],
+    bodies:['Короткий тизер, который заставляет листать →','Объясните первую идею просто. 2–3 предложения.','Одна мысль — один слайд. Короткие предложения.','Используйте цифры и факты там, где они есть.','Конкретные примеры лучше абстрактных советов.','Держите темп — это середина, не конец.','Ещё один сильный аргумент.','Будьте конкретны и точны.','Ещё одна идея перед финалом.','Почти готово — сделайте это весомым.','Последняя мысль перед выводом.','Главный вывод. Призыв к действию.'],
+  },
+  fi:{
+    tags:  ['JOHDANTO','VINKKI #1','VINKKI #2','VINKKI #3','VINKKI #4','VINKKI #5','VINKKI #6','VINKKI #7','VINKKI #8','VINKKI #9','VINKKI #10','YHTEENVETO'],
+    heads: ['Koukuttava otsikko tähän','Ensimmäinen pääkohta','Toinen pääkohta','Kolmas pääkohta','Neljäs pääkohta','Viides pääkohta','Kuudes pääkohta','Seitsemäs pääkohta','Kahdeksas pääkohta','Yhdeksäs pääkohta','Kymmenes pääkohta','Yhteenveto ja toimintakehote'],
+    bodies:['Lyhyt teaser, joka saa ihmiset pyyhkäisemään →','Selitä ensimmäinen idea selkeästi. 2–3 lausetta.','Yksi ajatus per dia. Lyhyet lauseet toimivat parhaiten.','Käytä numeroita ja faktoja kun niitä on.','Konkreettiset esimerkit voittavat epämääräiset neuvot.','Pidä energia yllä — tämä on keskikohta, ei loppu.','Toinen vahva argumentti.','Ole konkreettinen ja tarkka.','Vielä yksi idea ennen yhteenvetoa.','Melkein valmis — tee siitä painava.','Viimeinen ajatus ennen yhteenvetoa.','Tiivistä tärkein viesti. Lisää toimintakehote.'],
+  },
+};
+
+function initSlides(n) {
+  const old = state.slides;
+  state.slides = [];
+  for(let i=0;i<n;i++) state.slides.push(old[i]||{tag:'',headline:'',body:'',photoUrl:null,dim:55,zoom:150,posY:50});
+}
+
+function render() {
+  const main = document.getElementById('main');
+  main.innerHTML = '';
+  const n = state.count;
+  const ph = PH[state.lang];
+  const p = PLATFORMS[state.platform];
+
+  for(let i=0;i<n;i++){
+    const s = state.slides[i];
+    const bgClass = (i===0||i===n-1) ? 'bg-warm' : (BG_SEQ[i]||'bg-diag');
+    const pi = Math.min(i, ph.tags.length-1);
+    const dots = Array.from({length:n},(_,di)=>`<span${di===i?' class="active"':''}></span>`).join('');
+
+    const row = document.createElement('div');
+    row.className = 'slide-row';
+    row.innerHTML = `
+      <div class="editor">
+        <div class="slide-index">Slide ${i+1} / ${n}</div>
+        <div>
+          <div class="field-label">Tag <span class="opt">(optional)</span></div>
+          <input type="text" maxlength="20" placeholder="${ph.tags[pi]}" value="${esc(s.tag)}" oninput="upd(${i},'tag',this.value)">
+        </div>
+        <div>
+          <div class="field-label">Headline</div>
+          <input type="text" placeholder="${ph.heads[pi]}" value="${esc(s.headline)}" oninput="upd(${i},'headline',this.value)">
+        </div>
+        <div>
+          <div class="field-label">Body text</div>
+          <textarea class="body-field" placeholder="${ph.bodies[pi]}" oninput="upd(${i},'body',this.value)">${esc(s.body)}</textarea>
+        </div>
+        <div class="photo-strip">
+          <input class="file-input" type="file" accept="image/*" id="file-${i}" onchange="loadPhoto(${i},this)">
+          <button class="photo-btn${s.photoUrl?' has-photo':''}" id="pbtn-${i}" onclick="document.getElementById('file-${i}').click()">
+            ${s.photoUrl?'🖼 Change photo':'📷 Add background photo'}
+          </button>
+          <button class="remove-photo-btn" id="rbtn-${i}" style="${s.photoUrl?'display:inline-block':''}" onclick="removePhoto(${i})">✕</button>
+        </div>
+        <div class="dimmer-strip" id="dstrip-${i}" style="${s.photoUrl?'display:flex':''}">
+          <span>Dim</span>
+          <input type="range" min="0" max="85" value="${s.dim}" oninput="updateDim(${i},this.value)">
+          <span id="dval-${i}">${s.dim}%</span>
+        </div>
+        <div class="dimmer-strip" id="zstrip-${i}" style="${s.photoUrl?'display:flex':''}">
+          <span>Zoom</span>
+          <input type="range" min="100" max="400" value="${s.zoom}" oninput="updateZoom(${i},this.value)">
+          <span id="zval-${i}">${s.zoom}%</span>
+        </div>
+        <div class="dimmer-strip" id="pstrip-${i}" style="${s.photoUrl?'display:flex':''}">
+          <span>↕ Pos</span>
+          <input type="range" min="0" max="100" value="${s.posY}" oninput="updatePosY(${i},this.value)">
+        </div>
+      </div>
+      <div class="preview-col">
+        <div class="slide-card ${bgClass}" id="card-${i}" style="max-width:${p.w}px;min-height:${p.h}px">
+          <div class="card-photo" id="cphoto-${i}" style="${s.photoUrl?`display:block;background-image:url(${s.photoUrl})`:''}"></div>
+          <div class="card-overlay" id="coverlay-${i}" style="${s.photoUrl?'display:block':''}"></div>
+          <span class="card-number">${i+1}/${n}</span>
+          <span class="card-tag" id="ctag-${i}">${esc(s.tag)||ph.tags[pi]}</span>
+          <div class="card-headline" id="chead-${i}">${esc(s.headline)||ph.heads[pi]}</div>
+          <div class="card-body" id="cbody-${i}">${esc(s.body)||ph.bodies[pi]}</div>
+          <div class="card-dots">${dots}</div>
+        </div>
+      </div>`;
+    main.appendChild(row);
+    if(s.photoUrl) { applyDim(i,s.dim); applyPhotoStyle(i); }
+  }
+  document.getElementById('count-display').textContent = n;
+}
+
+function upd(i,field,val){
+  state.slides[i][field]=val;
+  const ph=PH[state.lang]; const pi=Math.min(i,ph.tags.length-1);
+  if(field==='tag')      document.getElementById(`ctag-${i}`).textContent  = val||ph.tags[pi];
+  if(field==='headline') document.getElementById(`chead-${i}`).textContent = val||ph.heads[pi];
+  if(field==='body')     document.getElementById(`cbody-${i}`).textContent = val||ph.bodies[pi];
+}
+
+function changeCount(d){
+  const n=Math.min(12,Math.max(4,state.count+d));
+  if(n===state.count)return;
+  state.count=n; initSlides(n); render(); updatePromptBox();
+}
+
+function pick(btn){
+  const g=btn.dataset.group;
+  document.querySelectorAll(`[data-group="${g}"]`).forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  state[g]=btn.dataset.val;
+  if(g==='platform'){
+    const p=PLATFORMS[state.platform];
+    document.querySelectorAll('.slide-card').forEach((c,i)=>{
+      c.style.maxWidth=p.w+'px';
+      c.style.minHeight=p.h+'px';
+      if(state.slides[i] && state.slides[i].photoUrl) c.classList.add('has-photo');
+    });
+  }
+  if(g==='lang') { render(); updatePromptBox(); }
+}
+
+function loadPhoto(i,input){
+  const file=input.files[0]; if(!file)return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const url = e.target.result;
+    state.slides[i].photoUrl = url;
+    const cp = document.getElementById(`cphoto-${i}`);
+    cp.style.display = 'block';
+    cp.style.backgroundImage = `url(${url})`;
+    const overlay = document.getElementById(`coverlay-${i}`);
+    if(overlay) overlay.style.display='block';
+    document.getElementById(`card-${i}`).classList.add('has-photo');
+    document.getElementById(`pbtn-${i}`).textContent='🖼 Change photo';
+    document.getElementById(`pbtn-${i}`).classList.add('has-photo');
+    document.getElementById(`rbtn-${i}`).style.display='inline-block';
+    document.getElementById(`dstrip-${i}`).style.display='flex';
+    document.getElementById(`zstrip-${i}`).style.display='flex';
+    document.getElementById(`pstrip-${i}`).style.display='flex';
+    applyDim(i, state.slides[i].dim);
+    applyPhotoStyle(i);
+  };
+  reader.readAsDataURL(file);
+}
+
+function removePhoto(i){
+  state.slides[i].photoUrl=null;
+  const cp=document.getElementById(`cphoto-${i}`);
+  cp.style.display='none'; cp.style.backgroundImage='';
+  document.getElementById(`coverlay-${i}`).style.display='none';
+  document.getElementById(`card-${i}`).classList.remove('has-photo');
+  document.getElementById(`pbtn-${i}`).textContent='📷 Add background photo';
+  document.getElementById(`pbtn-${i}`).classList.remove('has-photo');
+  document.getElementById(`rbtn-${i}`).style.display='none';
+  document.getElementById(`dstrip-${i}`).style.display='none';
+  document.getElementById(`zstrip-${i}`).style.display='none';
+  document.getElementById(`pstrip-${i}`).style.display='none';
+}
+
+function updateDim(i,val){
+  state.slides[i].dim=parseInt(val);
+  document.getElementById(`dval-${i}`).textContent=val+'%';
+  applyDim(i,val);
+}
+
+function applyPhotoStyle(i){
+  const s = state.slides[i];
+  const cp = document.getElementById(`cphoto-${i}`);
+  if(!cp) return;
+  cp.style.backgroundSize = s.zoom + '%';
+  cp.style.backgroundPosition = `center ${s.posY}%`;
+}
+
+function applyDim(i,val){
+  const overlay=document.getElementById(`coverlay-${i}`);
+  if(overlay) overlay.style.background=`rgba(0,0,0,${(val/100).toFixed(2)})`;
+}
+
+function updateZoom(i,val){
+  state.slides[i].zoom = parseInt(val);
+  document.getElementById(`zval-${i}`).textContent = val + '%';
+  applyPhotoStyle(i);
+}
+
+function updatePosY(i,val){
+  state.slides[i].posY = parseInt(val);
+  applyPhotoStyle(i);
+}
+
+const PROMPTS = {
+  en: (n) => ({
+    text: `Split this text into ${n} carousel slides. Language — English. Return in markup format: each slide separated by ---, fields TAG, HEADLINE, BODY.\n\n[paste your text here]`,
+    html: `Split this text into <span class="prompt-highlight">${n}</span> carousel slides. Language — <span class="prompt-highlight">English</span>. Return in markup format: each slide separated by ---, fields TAG, HEADLINE, BODY.\n\n<span class="prompt-highlight">[paste your text here]</span>`,
+  }),
+  ru: (n) => ({
+    text: `Раздели этот текст на ${n} слайдов для карусели. Язык — русский. Верни в формате разметки: каждый слайд через ---, поля TAG, HEADLINE, BODY.\n\n[вставь свой текст сюда]`,
+    html: `Раздели этот текст на <span class="prompt-highlight">${n}</span> слайдов для карусели. Язык — <span class="prompt-highlight">русский</span>. Верни в формате разметки: каждый слайд через ---, поля TAG, HEADLINE, BODY.\n\n<span class="prompt-highlight">[вставь свой текст сюда]</span>`,
+  }),
+  fi: (n) => ({
+    text: `Jaa tämä teksti ${n} karusellikorttiin. Kieli — suomi. Palauta merkintämuodossa: jokainen kortti erotettu ---, kentät TAG, HEADLINE, BODY.\n\n[liitä tekstisi tähän]`,
+    html: `Jaa tämä teksti <span class="prompt-highlight">${n}</span> karusellikorttiin. Kieli — <span class="prompt-highlight">suomi</span>. Palauta merkintämuodossa: jokainen kortti erotettu ---, kentät TAG, HEADLINE, BODY.\n\n<span class="prompt-highlight">[liitä tekstisi tähän]</span>`,
+  }),
+};
+
+function updatePromptBox() {
+  const box = document.getElementById('prompt-box');
+  if (box) box.innerHTML = PROMPTS[state.lang](state.count).html;
+}
+
+function copyPrompt(){
+  const text = PROMPTS[state.lang](state.count).text;
+  const btn = document.getElementById('copy-btn');
+  const confirm = () => {
+    btn.textContent='✓ Copied!'; btn.classList.add('copied');
+    setTimeout(()=>{btn.textContent='📋 Copy prompt';btn.classList.remove('copied');},2000);
+  };
+  // clipboard API may fail on file://
+  if(navigator.clipboard && window.isSecureContext){
+    navigator.clipboard.writeText(text).then(confirm).catch(()=>fallbackCopy(text,confirm));
+  } else {
+    fallbackCopy(text, confirm);
+  }
+}
+
+function fallbackCopy(text, callback){
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0';
+  document.body.appendChild(ta);
+  ta.focus(); ta.select();
+  try { document.execCommand('copy'); callback(); } catch(e){}
+  document.body.removeChild(ta);
+}
+
+function togglePaste(){
+  const panel=document.getElementById('paste-panel');
+  const btn=document.getElementById('paste-toggle');
+  const open=panel.classList.toggle('open');
+  btn.textContent=open?'▴ Close':'▾ Open';
+}
+
+function parseScript(){
+  const raw=document.getElementById('script-input').value.trim();
+  const status=document.getElementById('parse-status');
+  if(!raw){status.textContent='Paste something first.';status.className='parse-status err';return;}
+
+  // Extract field — supports multiline BODY
+  function getField(block, key) {
+    const lines = block.split('\n');
+    let value = '';
+    let capturing = false;
+    for (const line of lines) {
+      const upper = line.toUpperCase();
+      if (upper.startsWith(key.toUpperCase() + ':')) {
+        value = line.slice(key.length + 1).trim();
+        capturing = true;
+      } else if (capturing && /^(TAG|HEADLINE|BODY):/i.test(line)) {
+        break;
+      } else if (capturing) {
+        value += ' ' + line.trim();
+      }
+    }
+    return value.trim();
+  }
+
+  let blocks = [];
+
+  // Format 1: --- separators
+  if (/^---\s*$/m.test(raw)) {
+    blocks = raw.split(/^---\s*$/m).map(b=>b.trim()).filter(b=>b && /HEADLINE:|BODY:/i.test(b));
+  }
+
+  // Format 2: split on every TAG: line
+  if (!blocks.length) {
+    const parts = raw.split(/(?=^TAG:)/im).map(b=>b.trim()).filter(b=>b && /HEADLINE:|BODY:/i.test(b));
+    if (parts.length > 1) blocks = parts;
+  }
+
+  // Format 3: blank-line separated
+  if (!blocks.length) {
+    blocks = raw.split(/\n{2,}/).map(b=>b.trim()).filter(b=>b && /TAG:|HEADLINE:|BODY:/i.test(b));
+  }
+
+  if (!blocks.length) {
+    status.textContent = 'Could not find TAG/HEADLINE/BODY fields.';
+    status.className = 'parse-status err';
+    return;
+  }
+
+  const parsed = blocks.map(block => ({
+    tag:      getField(block,'TAG'),
+    headline: getField(block,'HEADLINE'),
+    body:     getField(block,'BODY'),
+    photoUrl: null,
+    dim:      55,
+    zoom:     150,
+    posY:     50,
+  })).filter(s => s.headline || s.body);
+
+  if (!parsed.length) {
+    status.textContent = 'Could not parse any slides.';
+    status.className = 'parse-status err';
+    return;
+  }
+
+  state.count = Math.min(12, Math.max(4, parsed.length));
+  state.slides = parsed.slice(0, state.count);
+  while(state.slides.length < state.count) state.slides.push({tag:'',headline:'',body:'',photoUrl:null,dim:55,zoom:150,posY:50});
+
+  render();
+  status.textContent = '✓ ' + parsed.length + ' slide' + (parsed.length>1?'s':'') + ' loaded';
+  status.className = 'parse-status ok';
+}
+function clearScript(){
+  document.getElementById('script-input').value='';
+  document.getElementById('parse-status').textContent='';
+  document.getElementById('parse-status').className='parse-status';
+}
+
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+// ── PRESENT MODE ──────────────────────────────────────
+let presentIndex = 0;
+let touchStartX = 0;
+let touchStartY = 0;
+
+function openPresent(i) {
+  presentIndex = i;
+  renderPresentCard();
+  const overlay = document.getElementById('present-overlay');
+  overlay.classList.add('active');
+  // request fullscreen
+  const el = document.documentElement;
+  if(el.requestFullscreen) el.requestFullscreen();
+  else if(el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+}
+
+function closePresent() {
+  document.getElementById('present-overlay').classList.remove('active');
+  if(document.exitFullscreen) document.exitFullscreen().catch(()=>{});
+  else if(document.webkitExitFullscreen) document.webkitExitFullscreen();
+}
+
+function renderPresentCard() {
+  const n = state.count;
+  const s = state.slides[presentIndex];
+  const ph = PH[state.lang];
+  const pi = Math.min(presentIndex, ph.tags.length - 1);
+  const p = PLATFORMS[state.platform];
+
+  // Scale card to fit screen with padding
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  const pad = 32;
+  const scaleX = (vw - pad*2) / p.w;
+  const scaleY = (vh - pad*2) / p.h;
+  const scale = Math.min(scaleX, scaleY, 3);
+  const cw = Math.round(p.w * scale);
+  const ch = Math.round(p.h * scale);
+
+  const bgClass = (presentIndex===0 || presentIndex===n-1) ? 'bg-warm' : (BG_SEQ[presentIndex]||'bg-diag');
+
+  const card = document.getElementById('present-card');
+  card.className = 'present-card ' + bgClass + (s.photoUrl ? ' has-photo' : '');
+  card.style.cssText = `width:${cw}px;height:${ch}px;padding:${Math.round(16*scale)}px ${Math.round(20*scale)}px ${Math.round(44*scale)}px;`;
+
+  const fs = scale; // font scale
+  card.innerHTML = `
+    <div style="position:absolute;inset:0;background-size:${s.zoom||150}%;background-position:center ${s.posY||50}%;background-image:${s.photoUrl?'url('+s.photoUrl+')':''};display:${s.photoUrl?'block':'none'};z-index:0;"></div>
+    <div style="position:absolute;inset:0;background:rgba(0,0,0,${((s.dim||55)/100).toFixed(2)});display:${s.photoUrl?'block':'none'};z-index:1;"></div>
+    <span style="position:absolute;top:${Math.round(11*fs)}px;right:${Math.round(13*fs)}px;font-family:'PT Sans',sans-serif;font-size:${Math.round(10*fs)}px;color:rgba(255,255,255,0.3);letter-spacing:1px;z-index:2;">${presentIndex+1}/${n}</span>
+    <span style="font-family:'Montserrat',sans-serif;font-size:${Math.round(8*fs)}px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.45);margin-bottom:${Math.round(6*fs)}px;position:relative;z-index:2;display:block;">${esc(s.tag)||ph.tags[pi]}</span>
+    <div style="font-family:'Montserrat',sans-serif;font-weight:800;font-size:${Math.round(12*fs)}px;line-height:1.3;color:#fff;margin-bottom:${Math.round(7*fs)}px;position:relative;z-index:2;word-break:break-word;">${esc(s.headline)||ph.heads[pi]}</div>
+    <div style="font-family:'PT Sans',sans-serif;font-size:${Math.round(10*fs)}px;line-height:1.5;color:rgba(255,255,255,0.82);position:relative;z-index:2;word-break:break-word;">${esc(s.body)||ph.bodies[pi]}</div>
+    <div style="position:absolute;bottom:${Math.round(11*fs)}px;left:50%;transform:translateX(-50%);display:flex;gap:${Math.round(4*fs)}px;z-index:2;">
+      ${Array.from({length:n},(_,di)=>`<span style="width:${Math.round(4*fs)}px;height:${Math.round(4*fs)}px;border-radius:50%;background:${di===presentIndex?'rgba(255,255,255,0.75)':'rgba(255,255,255,0.22)'};display:block;"></span>`).join('')}
+    </div>`;
+
+  // dots
+  const dots = document.getElementById('present-dots');
+  dots.innerHTML = Array.from({length:n},(_,di)=>`<span${di===presentIndex?' class="active"':''}></span>`).join('');
+}
+
+function presentGo(dir) {
+  const n = state.count;
+  presentIndex = (presentIndex + dir + n) % n;
+  renderPresentCard();
+}
+
+// Swipe support
+const overlay = document.getElementById('present-overlay');
+overlay.addEventListener('touchstart', e => {
+  touchStartX = e.touches[0].clientX;
+  touchStartY = e.touches[0].clientY;
+}, {passive:true});
+overlay.addEventListener('touchend', e => {
+  const dx = e.changedTouches[0].clientX - touchStartX;
+  const dy = e.changedTouches[0].clientY - touchStartY;
+  if(Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40) {
+    presentGo(dx < 0 ? 1 : -1);
+  } else if(dy > 60) {
+    closePresent(); // swipe down to close
+  }
+}, {passive:true});
+
+// Keyboard arrows
+document.addEventListener('keydown', e => {
+  if(!document.getElementById('present-overlay').classList.contains('active')) return;
+  if(e.key==='ArrowRight'||e.key==='ArrowDown') presentGo(1);
+  if(e.key==='ArrowLeft'||e.key==='ArrowUp') presentGo(-1);
+  if(e.key==='Escape') closePresent();
+});
+
+// Fullscreen exit detection
+document.addEventListener('fullscreenchange', () => {
+  if(!document.fullscreenElement) {
+    document.getElementById('present-overlay').classList.remove('active');
+  }
+});
+
+initSlides(state.count);
+render();
+updatePromptBox();
+</script>
+</body>
+</html>
